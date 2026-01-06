@@ -1,32 +1,49 @@
-import { useState } from 'react';
-import { Facebook, Loader } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Facebook, Loader } from "lucide-react";
 
 export default function FacebookLogin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Listen for messages from popup window
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data.type === "FACEBOOK_LOGIN_SUCCESS") {
+        setLoading(false);
+        window.location.href = "/success";
+      } else if (event.data.type === "FACEBOOK_LOGIN_ERROR") {
+        setLoading(false);
+        setError(event.data.message || "Login failed");
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   const handleFacebookLogin = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/auth/facebook', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // Open Facebook login in new window
+      const popup = window.open(
+        "http://localhost:5000/api/auth/facebook",
+        "facebookLogin",
+        "width=600,height=600,scrollbars=yes,resizable=yes"
+      );
 
-      if (!response.ok) {
-        throw new Error('Facebook login failed');
-      }
-
-      const data = await response.json();
-      if (data.redirect_url) {
-        window.location.href = data.redirect_url;
-      }
+      // Optional: Listen for popup closure
+      const checkClosed = setInterval(() => {
+        if (popup?.closed) {
+          clearInterval(checkClosed);
+          setLoading(false);
+          // If popup closed without success message, show error
+          setError("Login was cancelled");
+        }
+      }, 1000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
+      setError(err instanceof Error ? err.message : "Login failed");
       setLoading(false);
     }
   };
@@ -39,7 +56,9 @@ export default function FacebookLogin() {
             <Facebook className="w-12 h-12 text-blue-600 fill-current" />
           </div>
 
-          <h1 className="text-2xl font-bold text-center text-gray-900 mb-2">Sign In</h1>
+          <h1 className="text-2xl font-bold text-center text-gray-900 mb-2">
+            Sign In
+          </h1>
           <p className="text-center text-gray-600 mb-8">
             Use your Facebook account to sign in
           </p>
