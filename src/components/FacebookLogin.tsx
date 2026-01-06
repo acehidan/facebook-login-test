@@ -10,7 +10,9 @@ export default function FacebookLogin() {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === "FACEBOOK_LOGIN_SUCCESS") {
         setLoading(false);
-        window.location.href = "/success";
+        // Redirect to success page with token and pageId in hash
+        const { token, pageId } = event.data;
+        window.location.href = `/success#token=${token}&pageId=${pageId}`;
       } else if (event.data.type === "FACEBOOK_LOGIN_ERROR") {
         setLoading(false);
         setError(event.data.message || "Login failed");
