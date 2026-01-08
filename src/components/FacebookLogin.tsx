@@ -11,7 +11,8 @@ export default function FacebookLogin() {
       setError(null);
 
       // Redirect to Facebook login in the same window
-      window.location.href = "http://localhost:5000/api/auth/facebook";
+      window.location.href =
+        "https://facebook-oauth-01dy.onrender.com/api/v1/auth/facebook";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
       setLoading(false);
